@@ -30,8 +30,8 @@ def get_error_name(e):
         return 'Permission denied'
     if e == errno.EFAULT:
         return 'Bad address'
-    if e == errno.ENOTBLK:
-        return 'Block device required'
+#   if e == errno.ENOTBLK:
+#      return 'Block device required'
     if e == errno.EBUSY:
         return 'Device or resource busy'
     if e == errno.EEXIST:
@@ -52,8 +52,8 @@ def get_error_name(e):
         return 'Too many open files'
     if e == errno.ENOTTY:
         return 'Not a typewriter'
-    if e == errno.ETXTBSY:
-        return 'Text file busy'
+#    if e == errno.ETXTBSY:
+       #turn 'Text file busy'
     if e == errno.EFBIG:
         return 'File too large'
     if e == errno.ENOSPC:

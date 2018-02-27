@@ -1,9 +1,14 @@
 class Position(object):
-    def __init__(self, x, y, dx=0, dy=0):
+
+    def __init__(self, x, y, dx=0, dy=1):
+        if dx == 0 and dy == 0:
+            self._dx = 0
+            self._dy = 1
+        else:
+            self._dx = dx
+            self._dy = dy
         self._x = x
         self._y = y
-        self._dx = dx
-        self._dy = dy
 
     def get_coordinates(self):
         return self._x, self._y
@@ -16,8 +21,12 @@ class Position(object):
         self._y = y
 
     def set_pose(self, dx, dy):
-        self._dx = dx
-        self._dy = dy
+        if dx == 0 and dy == 0:
+            self._dx = 0
+            self._dy = 1
+        else:
+            self._dx = dx
+            self._dy = dy
 
     def set_position(self, x, y, dx, dy):
         self.set_coordinates(x, y)

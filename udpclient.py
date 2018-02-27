@@ -51,8 +51,10 @@ class RClient(object):
             self.recv_thread = threading.Thread(target=self.recv_loop)
             self.recv_thread.start()
             return True
-        except:
-            raise socket.error
+        except socket.error, e:
+            reason = get_error_name(e[0])
+            print "Socket Error: " + reason
+        return False
 
     def recv_loop(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -69,9 +71,12 @@ class RClient(object):
                         self.sensors = [float(s) for s in data.split()]
                     except ValueError:
                         pass
-            except:
-                raise socket.error
-            time.sleep(0.05)
+            except socket.error, e:
+                errnum = e[0]
+                if errnum != errno.EAGAIN:
+                    reason = get_error_name(errnum)
+                    print "Socket Error ({}): {}".format(errnum, reason)
+                time.sleep(0.05)
 
     def sendmsg(self, msg):
         with self.lock:
@@ -101,7 +106,7 @@ class RClient(object):
 #  from the keyboard, and see raw sersor readings on the screen
 #
 done = False
-cmd = ''
+cmd = '250 250'
 
 
 def kbd():
@@ -116,30 +121,32 @@ def kbd():
 def test():
     global done
     global cmd
-    r = RClient("192.168.1.151", 2777)
+    r = RClient("192.168.1.153", 2777)
+    print r
     counter = 0
     if r.connect():
+        print "connected"
         kbd_thread = threading.Thread(target=kbd)
         kbd_thread.start()
         while not done:
             # Keyboard input can be a pair of speeds, or q to exit
             if cmd:
-                s = cmd.split()
-                cmd = ''
+                s = cmd.split(" ")
+                #cmd = ''
                 if len(s) == 2:
                     try:
                         r.drive(int(s[0]), int(s[1]))
                     except ValueError:
-                        print("Invalid speeds")
-            time.sleep(0.1)
+                        print "Invalid speeds"
+            time.sleep(0.8)
             counter += 1
             # if (counter%10)==0:
-            print(r.sense())
+            print r.sense()
         r.terminate()
-        print("Done")
+        print "Done"
         kbd_thread.join()
     else:
-        print("Failed to connect")
+        print "Failed to connect"
 
 
 if __name__ == '__main__':

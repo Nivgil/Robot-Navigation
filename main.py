@@ -51,7 +51,9 @@ def move_robot(robot, distance, default_speed=250):
 
 def get_location(robot=None):
     state = robot.sense()
-    return state[:3]
+    print state
+    position = Position(state[0], state[1], state[2], state[3])
+    return position
 
 
 def get_sensing(robot=None):
@@ -60,24 +62,30 @@ def get_sensing(robot=None):
 
 
 def main():
-    robot = RClient("192.168.1.151", 2777)
+    robot = RClient("192.168.1.153", 2777)
     print("connected to robot")
     p1 = Position(100, 150, 0, 0)
     p2 = Position(-400, -200, 0, 0)
     current_pose = get_location(robot)
-    print("initial location is : " + current_pose)
+    print current_pose.get_pose()
 
     # move to first point from initial point
     distance, v1 = calc_vector(current_pose, p1)
-    rotate_robot(robot, current_pose[2:], v1)
+    print distance
+    rotate_robot(robot, current_pose.get_pose(), v1)
+    print "rotated"
     move_robot(robot, distance)
+    print "moved"
 
     # move to second point from first point
     current_pose = get_location(robot)
-    print("got to location: "+  current_pose )
+    print "got to location: " + current_pose
 
     distance, v2 = calc_vector(current_pose, p2)
-    rotate_robot(robot,current_pose[2:], v2)
-    move_robot(robot,distance)
+    rotate_robot(robot, current_pose[2:], v2)
+    move_robot(robot, distance)
 
     robot.terminate()
+
+
+main()
