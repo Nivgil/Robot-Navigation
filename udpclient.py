@@ -51,10 +51,8 @@ class RClient(object):
             self.recv_thread = threading.Thread(target=self.recv_loop)
             self.recv_thread.start()
             return True
-        except socket.error, e:
-            reason = get_error_name(e[0])
-            print "Socket Error: " + reason
-        return False
+        except:
+            raise socket.error
 
     def recv_loop(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,12 +69,9 @@ class RClient(object):
                         self.sensors = [float(s) for s in data.split()]
                     except ValueError:
                         pass
-            except socket.error, e:
-                errnum = e[0]
-                if errnum != errno.EAGAIN:
-                    reason = get_error_name(errnum)
-                    print "Socket Error ({}): {}".format(errnum, reason)
-                time.sleep(0.05)
+            except:
+                raise socket.error
+            time.sleep(0.05)
 
     def sendmsg(self, msg):
         with self.lock:
@@ -94,60 +89,13 @@ class RClient(object):
 
     def drive(self, left, right):
         """ Make the robot move.  Send 2 integers for motors [-1000 : 1000] """
-        self.sendmsg("{} {}".format(left, right))
+        self.sendmsg('{} {}'.format(left, right).encode())
 
     def sense(self):
         """ Get a list of sensor readings.  5 floating point values:  X,Y, 3 sonars """
         return self.sensors
 
 
-#
-#  Following code is a simple test main that allows to control the robot
-#  from the keyboard, and see raw sersor readings on the screen
-#
-done = False
-cmd = '250 250'
-
-
-def kbd():
-    global cmd
-    while cmd != 'q':
-        cmd = sys.stdin.readline().strip()
-    cmd = ''
-    global done
-    done = True
-
-
-def test():
-    global done
-    global cmd
-    r = RClient("192.168.1.153", 2777)
-    print r
-    counter = 0
-    if r.connect():
-        print "connected"
-        kbd_thread = threading.Thread(target=kbd)
-        kbd_thread.start()
-        while not done:
-            # Keyboard input can be a pair of speeds, or q to exit
-            if cmd:
-                s = cmd.split(" ")
-                #cmd = ''
-                if len(s) == 2:
-                    try:
-                        r.drive(int(s[0]), int(s[1]))
-                    except ValueError:
-                        print "Invalid speeds"
-            time.sleep(0.8)
-            counter += 1
-            # if (counter%10)==0:
-            print r.sense()
-        r.terminate()
-        print "Done"
-        kbd_thread.join()
-    else:
-        print "Failed to connect"
-
-
 if __name__ == '__main__':
     test()
+

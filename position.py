@@ -31,3 +31,4 @@ class Position(object):
     def set_position(self, x, y, dx, dy):
         self.set_coordinates(x, y)
         self.set_pose(dx, dy)
+
