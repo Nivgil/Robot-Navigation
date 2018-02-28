@@ -1,12 +1,13 @@
 from udpclient import RClient
 from position import Position
+from obstacles import Obstacles
 import navigation
 import math
 import time
 
 
 def get_robot(mode, *args, **kwargs):
-    return {'simple': RobotSimple, 'test_sensing': ObstaclesTesting}[mode](*args, **kwargs)
+    return {'simple': RobotSimple}[mode](*args, **kwargs)
 
 
 def valid_position(position):
@@ -23,7 +24,9 @@ class Robot(object):
         self._robot.connect()
         self._default_speed = default_speed
         self._position = Position(x=0, y=0, dx=0, dy=0)
+        self._obstacles = Obstacles(-1.0, -1.0, -1.0)
         self.get_position()
+        self.get_obstacles()
 
     def get_position(self):
         sample = self._robot.sense()
@@ -35,9 +38,12 @@ class Robot(object):
             print('Invalid Position')
         return self._position
 
-    def get_sensing(self):
+    def get_obstacles(self):
         sample = self._robot.sense()
-        return sample[4:]
+        while len(sample) < 5:
+            time.sleep(0.1)
+        self._obstacles.set_obstacles(sample[4], sample[5], sample[6])
+        return self._obstacles
 
     def navigate(self, destination):
         raise NotImplementedError
@@ -47,8 +53,8 @@ class Robot(object):
 
 
 class RobotSimple(Robot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __str__(self):
+        super(self)
 
     def navigate(self, destination):
         k = 100
@@ -102,16 +108,3 @@ class RobotSimple(Robot):
             speed_minus = 1000
         print(speed_minus)
         return
-
-
-class ObstaclesTesting(Robot):
-    def __init__(self):
-        super().__init__()
-
-    def navigate(self, destination):
-        counter = 20
-        while counter > 0:
-            sensing = self.get_sensing()
-            counter -= 1
-            print(sensing)
-            time.sleep(0.5)
