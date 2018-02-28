@@ -2,6 +2,7 @@ import time
 import sys
 import threading
 import robot
+import obstacles
 from position import Position
 
 cmd = ''
@@ -14,7 +15,7 @@ def kbd():
 
 
 def main():
-    my_robot = robot.get_robot('simple')
+    my_robot = robot.get_robot('test_sensing')
     kbd_thread = threading.Thread(target=kbd)
     kbd_thread.start()
     time.sleep(1)

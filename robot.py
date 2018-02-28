@@ -6,7 +6,7 @@ import time
 
 
 def get_robot(mode, *args, **kwargs):
-    return {'simple': RobotSimple}[mode](*args, **kwargs)
+    return {'simple': RobotSimple, 'test_sensing': ObstaclesTesting}[mode](*args, **kwargs)
 
 
 def valid_position(position):
@@ -35,6 +35,10 @@ class Robot(object):
             print('Invalid Position')
         return self._position
 
+    def get_sensing(self):
+        sample = self._robot.sense()
+        return sample[4:]
+
     def navigate(self, destination):
         raise NotImplementedError
 
@@ -43,8 +47,8 @@ class Robot(object):
 
 
 class RobotSimple(Robot):
-    def __str__(self):
-        super(self)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def navigate(self, destination):
         k = 100
@@ -58,10 +62,10 @@ class RobotSimple(Robot):
             distance, direction = navigation.calc_vector(current_position, destination)
             alpha = navigation.angle((current_position.dx, current_position.dy), direction)
             if alpha < 0.2:
-                speed_1 = self.get_speed_plus(k*0.2,alpha)
-                speed_2 = self.get_speed_minus(k*0.2, alpha)
+                speed_1 = self.get_speed_plus(k * 0.2, alpha)
+                speed_2 = self.get_speed_minus(k * 0.2, alpha)
             else:
-                speed_1 = self.get_speed_plus(k,alpha)
+                speed_1 = self.get_speed_plus(k, alpha)
                 speed_2 = self.get_speed_minus(k, alpha)
             print('distance [{}], alpha [{}] '.format(distance, alpha))
             if abs(alpha) >= (math.pi / 2):  # deviation is bigger than 90 degrees
@@ -73,18 +77,16 @@ class RobotSimple(Robot):
                     self._robot.drive(-self._default_speed, self._default_speed)  # turn left
                 time.sleep(0.75)
             elif alpha > 0:
-                    self._robot.drive(speed_1, speed_2) #turn right
+                self._robot.drive(speed_1, speed_2)  # turn right
             else:
-                    self._robot.drive(speed_2, speed_1) #turn left
+                self._robot.drive(speed_2, speed_1)  # turn left
 
             iteration += 1
             time.sleep(0.2)
         self._robot.drive(-250, -250)
         return distance < th_2
 
-
-
-    def get_speed_plus(self,k,alpha):
+    def get_speed_plus(self, k, alpha):
         speed_plus = self._default_speed + k * alpha
         if speed_plus < 300:
             speed_plus = 300
@@ -92,11 +94,24 @@ class RobotSimple(Robot):
             speed_plus = 1000
         return speed_plus
 
-    def get_speed_minus(self,k,alpha):
+    def get_speed_minus(self, k, alpha):
         speed_minus = self._default_speed - k * alpha
         if speed_minus < 300:
-            speed_minus  = 300
+            speed_minus = 300
         elif speed_minus > 1000:
             speed_minus = 1000
-        print (speed_minus)
+        print(speed_minus)
         return
+
+
+class ObstaclesTesting(Robot):
+    def __init__(self):
+        super().__init__()
+
+    def navigate(self, destination):
+        counter = 20
+        while counter > 0:
+            sensing = self.get_sensing()
+            counter -= 1
+            print(sensing)
+            time.sleep(0.5)
