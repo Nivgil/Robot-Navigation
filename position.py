@@ -1,34 +1,25 @@
 class Position(object):
 
-    def __init__(self, x, y, dx=0, dy=1):
-        if dx == 0 and dy == 0:
-            self._dx = 0
-            self._dy = 1
-        else:
-            self._dx = dx
-            self._dy = dy
-        self._x = x
-        self._y = y
+    def __init__(self, x=None, y=None, dx=None, dy=None):
+        self.dx = dx
+        self.dy = dy
+        self.x = x
+        self.y = y
 
-    def get_coordinates(self):
-        return self._x, self._y
+    def set_position(self, x=None, y=None, dx=None, dy=None):
+        if x is not None:
+            self.x = x
+        if y is not None:
+            self.y = y
+        if dx is not None:
+            self.dx = dx
+        if dy is not None:
+            self.dy = dy
 
-    def get_pose(self):
-        return self._dx, self._dy
+    def __str__(self):
+        string = 'x-[{}], y-[{}], dx-[{}], dy-[{}]'.format(self.x, self.y, self.dx, self.dy)
+        return string
 
-    def set_coordinates(self, x, y):
-        self._x = x
-        self._y = y
-
-    def set_pose(self, dx, dy):
-        if dx == 0 and dy == 0:
-            self._dx = 0
-            self._dy = 1
-        else:
-            self._dx = dx
-            self._dy = dy
-
-    def set_position(self, x, y, dx, dy):
-        self.set_coordinates(x, y)
-        self.set_pose(dx, dy)
-
+    def __repr__(self):
+        string = 'x-[{}], y-[{}], dx-[{}], dy-[{}]'.format(self.x, self.y, self.dx, self.dy)
+        return string

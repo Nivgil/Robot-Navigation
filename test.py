@@ -89,12 +89,59 @@ class RClient(object):
 
     def drive(self, left, right):
         """ Make the robot move.  Send 2 integers for motors [-1000 : 1000] """
-        self.sendmsg("{} {}".format(left, right).encode())
+        self.sendmsg("{} {}".format(left, right))
 
     def sense(self):
         """ Get a list of sensor readings.  5 floating point values:  X,Y, 3 sonars """
         return self.sensors
 
 
+#
+#  Following code is a simple test main that allows to control the robot
+#  from the keyboard, and see raw sersor readings on the screen
+#
+done = False
+cmd = ''
+
+
+def kbd():
+    global cmd
+    while cmd != 'q':
+        cmd = sys.stdin.readline().strip()
+    cmd = ''
+    global done
+    done = True
+
+
+def test():
+    global done
+    global cmd
+    r = RClient("192.168.1.155", 2777)
+    time.sleep(1)
+    counter = 0
+    if r.connect():
+        kbd_thread = threading.Thread(target=kbd)
+        kbd_thread.start()
+        while not done:
+            # Keyboard input can be a pair of speeds, or q to exit
+            if cmd:
+                s = cmd.split()
+                cmd = ''
+                if len(s) == 2:
+                    try:
+                        r.drive(int(s[0]), int(s[1]))
+                    except ValueError:
+                        print("Invalid speeds")
+            time.sleep(0.1)
+            counter += 1
+            # if (counter%10)==0:
+            print(r.sense())
+        r.terminate()
+        print("Done")
+        kbd_thread.join()
+    else:
+        print("Failed to connect")
+
+
 if __name__ == '__main__':
-    pass
+    test()
