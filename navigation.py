@@ -1,22 +1,20 @@
 import math
 import numpy as np
+from position import Position
 
-
-def dotproduct(v1, v2):
-    return sum((a * b) for a, b in zip(v1, v2))
-
-
-def length(v):
-    return math.sqrt(dotproduct(v, v))
+import math
+import numpy as np
 
 
 def angle(v1, v2):
-    return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2))) * np.sign(np.cross(v1, v2))
+    return (180 / math.pi) * math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))) * np.sign(
+        np.cross(v1, v2))
 
 
 def calc_vector(p1, p2):
     distance = math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
-    norm = length((p2.x - p1.x, p2.y - p1.y))
+    norm = np.linalg.norm((p2.x - p1.x, p2.y - p1.y))
+    # norm = length((p2.x - p1.x, p2.y - p1.y))
     direction = ((p2.x - p1.x) / norm, (p2.y - p1.y) / norm)
     return distance, direction
 
@@ -55,10 +53,32 @@ def distance_point_line(px, py, x1, y1, x2, y2):
 
     return distance
 
-#p1,p2,c - Positions, r - circle radius
-def intersects_circle(p1,p2,c,r=10):
+
+# p1,p2,c - Positions, r - circle radius
+def intersects_circle(p1, p2, c, r=10):
     d = distance_point_line(c.x, c.y, p1.x, p1.y, p2.x, p2.y)
     if d <= r:
         return True
     else:
         return False
+
+
+def get_obstacle_coordinate(p, distance, alpha):
+    dx1 = p.dx*math.cos((alpha*math.pi)/180) + p.dy*math.sin((alpha*math.pi)/180)
+    dy1 = -p.dx*math.sin((alpha*math.pi)/180) + p.dy*math.cos((alpha*math.pi)/180)
+    return(p.x+dx1*distance,p.y+dy1*distance)
+
+
+def get_obstacles(os, p):
+    o_list = []
+    if os[0] != -1:
+        o_list.append(get_obstacle_coordinate(p, os[0], 45))
+    if os[1] != -1:
+        o_list.append(get_obstacle_coordinate(p, os[1], 0))
+    if os[2] != -1:
+        o_list.append(get_obstacle_coordinate(p,os[2],-45))
+    return o_list
+
+
+a = get_obstacles((14.14,10,14.14),Position(1,1,2,2))
+print(a)
