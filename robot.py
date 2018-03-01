@@ -1,17 +1,18 @@
 from udpclient import RClient
 from position import Position
-from obstacles import Obstacles
 import navigation
 import math
 import time
+import numpy as np
+from graph import Node, Edge, Graph
 
 
 def get_robot(mode, *args, **kwargs):
-    return {'simple': RobotSimple}[mode](*args, **kwargs)
+    return {'simple': RobotSimple, 'test_sensing': ObstaclesTesting, 'road_map': RobotRoadMap}[mode](*args, **kwargs)
 
 
 def valid_position(position):
-    if position.x > 259 or position.x < -238 or position.y < -208 or position.y > 339:
+    if position.x > 150 or position.x < -240 or position.y < -300 or position.y > 270:
         return False
     if position.x == 0 and position.y == 0:
         return False
@@ -19,31 +20,27 @@ def valid_position(position):
 
 
 class Robot(object):
-    def __init__(self, ip_address="192.168.1.155", default_speed=500):
+    def __init__(self, ip_address="192.168.1.155", default_speed=450):
         self._robot = RClient(ip_address, 2777)
         self._robot.connect()
         self._default_speed = default_speed
         self._position = Position(x=0, y=0, dx=0, dy=0)
-        self._obstacles = Obstacles(-1.0, -1.0, -1.0)
         self.get_position()
-        self.get_obstacles()
 
     def get_position(self):
         sample = self._robot.sense()
         self._position.set_position(x=sample[0], y=sample[1], dx=sample[2], dy=sample[3])
         while valid_position(self._position) is False:
+            self._robot.drive(-self._default_speed, -self._default_speed)
             sample = self._robot.sense()
             self._position.set_position(x=sample[0], y=sample[1], dx=sample[2], dy=sample[3])
             time.sleep(0.1)
             print('Invalid Position')
         return self._position
 
-    def get_obstacles(self):
+    def get_sensing(self):
         sample = self._robot.sense()
-        while len(sample) < 5:
-            time.sleep(0.1)
-        self._obstacles.set_obstacles(sample[4], sample[5], sample[6])
-        return self._obstacles
+        return sample
 
     def navigate(self, destination):
         raise NotImplementedError
@@ -53,58 +50,99 @@ class Robot(object):
 
 
 class RobotSimple(Robot):
-    def __str__(self):
-        super(self)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def navigate(self, destination):
-        k = 100
-        th_1 = 60
-        th_2 = 5
+        k = 25
+        threshold = 8
+
         current_position = self.get_position()
         distance, direction = navigation.calc_vector(current_position, destination)
-        iteration = 0
-        while distance > th_2 and iteration < 20:
+        while distance > threshold:
             current_position = self.get_position()
             distance, direction = navigation.calc_vector(current_position, destination)
+            if distance < threshold:
+                self._robot.drive(-450, -450)
+                return True
             alpha = navigation.angle((current_position.dx, current_position.dy), direction)
-            if alpha < 0.2:
-                speed_1 = self.get_speed_plus(k * 0.2, alpha)
-                speed_2 = self.get_speed_minus(k * 0.2, alpha)
+            # print('-------------------------')
+            # print('distance [{}], alpha [{}] '.format(distance, alpha))
+            left_motor, right_motor = self.get_speed(k, alpha, distance)
+            self._robot.drive(left_motor, right_motor)
+            time.sleep(0.25)
+            if self.hard_turn(alpha) is True:
+                time.sleep(0.25)
+            # print('Left Motor [{}], Right Motor [{}]'.format(left_motor, right_motor))
+            distance, direction = navigation.calc_vector(current_position, destination)
+        self._robot.drive(-500, -500)
+        return distance < threshold
+
+    def _wheel_speed(self, k, alpha, distance, sign):
+        if distance < 100:
+            speed_factor = 0.45
+        else:
+            speed_factor = 1
+        if sign == '+':
+            speed = self._default_speed * speed_factor + k * abs(alpha)
+        if sign == '-':
+            speed = self._default_speed * speed_factor - k * abs(alpha)
+        speed = speed if speed > 300 else 300
+        speed = speed if speed < 1000 else 1000
+        return speed
+
+    def hard_turn(self, alpha):
+        return abs(alpha) >= 50
+
+    def get_speed(self, k, alpha, distance):
+        if abs(alpha) >= 50:  # deviation is bigger than 90 degrees
+            if alpha > 0:
+                # Turn right
+                left_motor = self._default_speed * 0.8 + k * abs(alpha) / 180
+                right_motor = -self._default_speed * 0.8 - k * abs(alpha) / 180
             else:
-                speed_1 = self.get_speed_plus(k, alpha)
-                speed_2 = self.get_speed_minus(k, alpha)
-            print('distance [{}], alpha [{}] '.format(distance, alpha))
-            if abs(alpha) >= (math.pi / 2):  # deviation is bigger than 90 degrees
-                if alpha > 0:
-                    print('turning right')
-                    self._robot.drive(self._default_speed, -self._default_speed)  # turn right
-                else:
-                    print('turning left')
-                    self._robot.drive(-self._default_speed, self._default_speed)  # turn left
-                time.sleep(0.75)
-            elif alpha > 0:
-                self._robot.drive(speed_1, speed_2)  # turn right
-            else:
-                self._robot.drive(speed_2, speed_1)  # turn left
+                # Turn left
+                left_motor = -self._default_speed * 0.8 - k * abs(alpha) / 180
+                right_motor = self._default_speed * 0.8 + k * abs(alpha) / 180
+        elif alpha > 0:
+            # Turn right
+            left_motor = self._wheel_speed(k, alpha, distance, '+')
+            right_motor = self._wheel_speed(k, alpha, distance, '-')
+        else:
+            # Turn left
+            left_motor = self._wheel_speed(k, alpha, distance, '-')
+            right_motor = self._wheel_speed(k, alpha, distance, '+')
+        return left_motor, right_motor
 
-            iteration += 1
-            time.sleep(0.2)
-        self._robot.drive(-250, -250)
-        return distance < th_2
 
-    def get_speed_plus(self, k, alpha):
-        speed_plus = self._default_speed + k * alpha
-        if speed_plus < 300:
-            speed_plus = 300
-        elif speed_plus > 1000:
-            speed_plus = 1000
-        return speed_plus
+class ObstaclesTesting(Robot):
+    def __init__(self):
+        super().__init__()
 
-    def get_speed_minus(self, k, alpha):
-        speed_minus = self._default_speed - k * alpha
-        if speed_minus < 300:
-            speed_minus = 300
-        elif speed_minus > 1000:
-            speed_minus = 1000
-        print(speed_minus)
-        return
+    def navigate(self, destination):
+        counter = 200
+        while counter > 0:
+            sensing = self.get_sensing()
+            counter -= 1
+            print(sensing)
+            time.sleep(0.5)
+
+
+class RobotRoadMap(Robot):
+    def __init__(self):
+        super().__init__()
+
+    def navigate(self, destination):
+        current_position = self.get_position()
+        current_position_id = str(np.floor(current_position.x)) + '&' + str(np.floor(current_position.y))
+        destination_id = str(np.floor(destination.x)) + '&' + str(np.floor(destination.y))
+        current_position_node = Node(current_position_id, np.array((current_position.x, current_position.y)))
+        destination_node = Node(destination_id, np.array((destination.x, destination.y)))
+
+        road_map = Graph()
+        road_map.add_node(destination_node)
+        road_map.add_node(current_position_node)
+        road_map.add_edge(current_position_node, destination_node)
+        visited, path = road_map.shortest_path(current_position_id, destination_id)
+
+        print(path)
