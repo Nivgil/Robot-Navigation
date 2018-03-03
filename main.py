@@ -15,7 +15,7 @@ def kbd():
 
 
 def main():
-    my_robot = robot.get_robot('test_sensing')
+    my_robot = robot.get_robot('road_map')
     kbd_thread = threading.Thread(target=kbd)
     kbd_thread.start()
     time.sleep(1)
@@ -27,7 +27,6 @@ def main():
         destination = p2
         time.sleep(0.5)
         if my_robot.navigate(destination):
-            print('Robot navigating to - ' + str(destination))
             time.sleep(1)
             print('Robot arrived to position - ' + str(my_robot.get_position()))
             distance, direction = navigation.calc_vector(my_robot.get_position(), destination)

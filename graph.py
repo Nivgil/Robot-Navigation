@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 class Graph(object):
     def __init__(self):
@@ -38,11 +38,16 @@ class Graph(object):
             self._edges.pop(edge_id_2, None)
         self._nodes.pop(node, None)
 
-    def update_weight(self,edge_id, new_weight):
+    def update_weight(self, edge_id, new_weight):
         edge = self._edges.get(edge_id)
         if edge is not None:
             edge.set_weight(new_weight)
 
+    def get_edges(self):
+        return self._edges.items()
+
+    def get_nodes(self):
+        return self._nodes.items()
 
     def shortest_path(self, initial_node_id, destination_node_id):
         visited = {initial_node_id: 0}
@@ -68,7 +73,7 @@ class Graph(object):
             for neighbor_id, neighbor in self._nodes.get(min_node).get_neighbors():
                 edge = self._edges.get(min_node + '_' + neighbor_id)
                 weight = current_weight + edge.get_weight()
-                if neighbor_id not in visited or weight < visited[neighbor_id]:
+                if weight != math.inf and (neighbor_id not in visited or weight < visited[neighbor_id]):
                     visited[neighbor_id] = weight
                     path[neighbor_id] = min_node
                     if neighbor_id == destination_node_id:
@@ -103,13 +108,18 @@ class Node(object):
 class Edge(object):
     def __init__(self, node_1=None, node_2=None):
         self._id = str(node_1.get_id()) + '_' + str(node_2.get_id())
-        self._weight = np.linalg.norm(node_1.get_coordinates() - node_2.get_coordinates())
+        self._weight = np.linalg.norm(np.array(node_1.get_coordinates()) - np.array(node_2.get_coordinates()))
+        self._coord_1 = node_1.get_coordinates()
+        self._coord_2 = node_2.get_coordinates()
 
     def get_id(self):
         return self._id
 
     def get_weight(self):
         return self._weight
+
+    def get_coordinates(self):
+        return self._coord_1, self._coord_2
 
     def set_weight(self, weight):
         self._weight = weight
