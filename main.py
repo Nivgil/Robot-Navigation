@@ -2,8 +2,8 @@ import time
 import sys
 import threading
 import robot
-import obstacles
 from position import Position
+import navigation
 
 cmd = ''
 
@@ -15,23 +15,47 @@ def kbd():
 
 
 def main():
-    my_robot = robot.get_robot('test_sensing')
+    # my_robot = robot.get_robot('road_map')
+    my_robot = robot.get_robot('mapped')
     kbd_thread = threading.Thread(target=kbd)
     kbd_thread.start()
     time.sleep(1)
     print("Robot initialized at position: " + str(my_robot.get_position()))
     p1 = Position(0, 0, 0, 1)
-    counter = 4
-    while cmd != 'q' and counter > 0:
-        counter -= 1
+    p2 = Position(-115, 250, 0, 0)
+    p3 = Position(120, 120, 0, 0)
+    while cmd != 'q':
+        destination = p2
         time.sleep(0.5)
-        if my_robot.navigate(p1):
+        if my_robot.navigate(destination):
+            time.sleep(1)
             print('Robot arrived to position - ' + str(my_robot.get_position()))
-            break
+            distance, direction = navigation.calc_vector(my_robot.get_position(), destination)
+            print('Distance from destination is [{}]'.format(distance))
+        destination = p1
+        # if my_robot.navigate(destination):
+        #     time.sleep(1)
+        #     print('Robot arrived to position - ' + str(my_robot.get_position()))
+        #     distance, direction = navigation.calc_vector(my_robot.get_position(), destination)
+        #     print('Distance from destination is [{}]'.format(distance))
+        # destination = p2
+        # if my_robot.navigate(destination):
+        #     time.sleep(1)
+        #     print('Robot arrived to position - ' + str(my_robot.get_position()))
+        #     distance, direction = navigation.calc_vector(my_robot.get_position(), destination)
+        #     print('Distance from destination is [{}]'.format(distance))
+        destination = p1
+        time.sleep(0.5)
+        if my_robot.navigate(destination):
+            time.sleep(1)
+            print('Robot arrived to position - ' + str(my_robot.get_position()))
+            distance, direction = navigation.calc_vector(my_robot.get_position(), destination)
+            print('Distance from destination is [{}]'.format(distance))
+        break
+    # my_robot.navigate2(p1)
+
     kbd_thread.join()
     my_robot.terminate()
-
-    # p2 = Position(-400, -200, 0, 0)
 
 
 if __name__ == '__main__':

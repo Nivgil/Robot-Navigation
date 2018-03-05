@@ -1,9 +1,16 @@
 import math
 import numpy as np
-from position import Position
 
-import math
-import numpy as np
+
+def node_id_to_coordinates(node_id):
+    index = node_id.find(',')
+    x_coord = float(node_id[:index])
+    y_coord = float(node_id[index + 1:])
+    return x_coord, y_coord
+
+
+def coordinates_to_node_id(coordinates):
+    return str(coordinates.x) + ',' + str(coordinates.y)
 
 
 def angle(v1, v2):
@@ -64,21 +71,17 @@ def intersects_circle(p1, p2, c, r=10):
 
 
 def get_obstacle_coordinate(p, distance, alpha):
-    dx1 = p.dx*math.cos((alpha*math.pi)/180) + p.dy*math.sin((alpha*math.pi)/180)
-    dy1 = -p.dx*math.sin((alpha*math.pi)/180) + p.dy*math.cos((alpha*math.pi)/180)
-    return(p.x+dx1*distance,p.y+dy1*distance)
+    dx1 = p.dx * math.cos((alpha * math.pi) / 180) - p.dy * math.sin((alpha * math.pi) / 180)
+    dy1 = p.dx * math.sin((alpha * math.pi) / 180) + p.dy * math.cos((alpha * math.pi) / 180)
+    return p.x + dx1 * distance, p.y + dy1 * distance
 
 
-def get_obstacles(os, p):
+def get_obstacles(obstacles, p):
     o_list = []
-    if os[0] != -1:
-        o_list.append(get_obstacle_coordinate(p, os[0], 45))
-    if os[1] != -1:
-        o_list.append(get_obstacle_coordinate(p, os[1], 0))
-    if os[2] != -1:
-        o_list.append(get_obstacle_coordinate(p,os[2],-45))
+    if obstacles[0] != -1:
+        o_list.append(get_obstacle_coordinate(p, obstacles[0], 45))
+    if obstacles[1] != -1:
+        o_list.append(get_obstacle_coordinate(p, obstacles[1], 0))
+    if obstacles[2] != -1:
+        o_list.append(get_obstacle_coordinate(p, obstacles[2], -45))
     return o_list
-
-
-a = get_obstacles((14.14,10,14.14),Position(1,1,2,2))
-print(a)

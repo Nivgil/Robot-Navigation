@@ -17,3 +17,4 @@ class Obstacles:
     def __repr__(self):
         string = 'r_obstacle-[{}], c_obstacle-[{}], left_obstacle-[{}]'.format(self.right, self.center, self.left)
         return string
+
