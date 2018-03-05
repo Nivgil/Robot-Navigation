@@ -125,6 +125,23 @@ class Graph(object):
                         if node_i[1] == dest_node:
                             print("Connected destination node to node {}".format(node_j[1].get_coordinates()))
 
+    def print_board(self, location, obstacles):
+        down_sample = 20
+        board = np.chararray(shape=(int(600 / down_sample), int(600 / down_sample)), unicode=True)
+        board[:] = '-'
+        # for node_id, node in self.get_nodes():
+        #     x_coord, y_coord = node.get_coordinates()
+        #     board[int((300 + x_coord) / down_sample), int((300 + y_coord) / down_sample)] = 'o'
+        for obstacle in obstacles.get_obstacles():
+            board[int((300 + obstacle.x) / down_sample), int((300 + obstacle.y) / down_sample)] = 'x'
+
+        board[int((300 + location.x) / down_sample), int((300 + location.y) / down_sample)] = '@'
+
+        print('---------------Board---------------------')
+        for row in range(0, int(600 / down_sample)):
+            for col in range(0, int(600 / down_sample)):
+                print(str(board[row][col]), end='')
+            print('')
 
 
 class Node(object):

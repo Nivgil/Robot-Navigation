@@ -347,7 +347,7 @@ class RobotMapped(Robot):
         road_map.create_edges1(final_destination_node)
         obstacles = Obstacles()
         is_arrived = self.navigate2(final_destination_node, road_map, obstacles)
-        return is_arrived
+        return road_map, obstacles
 
     @staticmethod
     def find_closest_node(graph, position):
