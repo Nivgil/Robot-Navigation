@@ -9,25 +9,25 @@ class Obstacle(object):
 
 
 class Obstacles(object):
-    def __init__(self, proximity_threshold=8):
+    def __init__(self, proximity_threshold=10):
         self._obstacles = list()
         self._proximity_threshold = proximity_threshold
 
     def add_obstacles(self, robot_position, sonar_sampling):
         new_obstacles = False
-        if sonar_sampling[0] != -1:
+        if sonar_sampling[0] != -1:# and sonar_sampling[0] < 70:
             x, y = self._get_obstacle_coordinate(robot_position, sonar_sampling[0], 45)
             min_dist = self._closest_obstacle(x, y)
             if min_dist > self._proximity_threshold:
                 self._obstacles.append(Obstacle(x, y))
                 new_obstacles = True
-        if sonar_sampling[1] != -1:
+        if sonar_sampling[1] != -1:# and sonar_sampling[1]# < 75:
             x, y = self._get_obstacle_coordinate(robot_position, sonar_sampling[1], 0)
             min_dist = self._closest_obstacle(x, y)
             if min_dist > self._proximity_threshold:
                 self._obstacles.append(Obstacle(x, y))
                 new_obstacles = True
-        if sonar_sampling[2] != -1:
+        if sonar_sampling[2] != -1:# and sonar_sampling[2] < 70:
             x, y = self._get_obstacle_coordinate(robot_position, sonar_sampling[2], -45)
             min_dist = self._closest_obstacle(x, y)
             if min_dist > self._proximity_threshold:

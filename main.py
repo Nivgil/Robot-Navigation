@@ -21,7 +21,7 @@ def main():
     time.sleep(1)
     print("Robot initialized at position: " + str(my_robot.get_position()))
     p1 = Position(0, 0, 0, 1)
-    p2 = Position(-120, 258, 0, 0)
+    p2 = Position(-115, 240, 0, 0)
     p3 = Position(120, 120, 0, 0)
     while cmd != 'q':
         destination = p2

@@ -297,17 +297,20 @@ class RobotMapped(Robot):
         final_destination = Position(final_destination_node.get_coordinates()[0],
                                      final_destination_node.get_coordinates()[1])
         current_position = self.get_position()
+        print("got position the first time")
         # closest_node_id, dist = self.find_closest_node(road_map, current_position)
 
         k = 25  # speed factor in turn with movement
-        threshold = 18
-        threshold_final = 6
+        threshold = 14
+        threshold_final = 35
         final_distance, direction = navigation.calc_vector(current_position, final_destination)
 
         while final_distance > threshold:
             current_position = self.get_position()
             closest_node_id, dist = self.find_closest_node(road_map, current_position)
+            print("Found closest node: {}".format(closest_node_id))
             visited, path = road_map.shortest_path(closest_node_id, final_destination_id)
+            print("Found shortest way")
             try:
                 next_node_position, departure_node_position = self.get_mid_destination(path, final_destination_id,
                                                                                        closest_node_id)
@@ -317,6 +320,7 @@ class RobotMapped(Robot):
                 break
 
             distance, direction = navigation.calc_vector(current_position, next_node_position)
+            print("Found next node: {} , in distance: {}".format(next_node_position,distance))
             while distance > threshold:
                 current_position = self.get_position()
                 distance, direction = navigation.calc_vector(current_position, next_node_position)
@@ -327,16 +331,18 @@ class RobotMapped(Robot):
                 # print('Navigating to Vertex {}, Distance {}, Alpha {}'.format(next_node_position, distance, alpha))
                 left_motor, right_motor = self.get_speed(k, alpha, distance)
                 self._robot.drive(left_motor, right_motor)
-                time.sleep(0.2)
+                time.sleep(0.4)
                 if self.hard_turn(alpha) is True:
                     time.sleep(0.25)
                 current_position = self.get_position()
                 distance, direction = navigation.calc_vector(current_position, next_node_position)
+            print("Got out of loop, recalculation way")
             current_position = self.get_position()
             final_distance, direction = navigation.calc_vector(current_position, final_destination)
             # self._robot.drive(-300, -300)
-            if final_distance < threshold:
-                threshold = threshold_final
+            if final_distance < threshold_final:
+                # threshold = threshold_final
+                return True
         return final_distance < threshold
 
     def navigate(self, destination):
@@ -345,8 +351,10 @@ class RobotMapped(Robot):
         road_map = Graph()
         final_destination_id, final_destination_node = road_map.create_nodes1(destination)
         road_map.create_edges1(final_destination_node)
+        print("Finished creating graph,nodes and edges")
         obstacles = Obstacles()
         is_arrived = self.navigate2(final_destination_node, road_map, obstacles)
+        self.navigate_end(destination)
         return road_map, obstacles
 
     @staticmethod
@@ -382,7 +390,7 @@ class RobotMapped(Robot):
         if new_obstacles is True:
             collision_detected = self.update_graph(road_map, obstacles.get_obstacles(), collision_th)
             if collision_detected is True:
-                self._robot.drive(-300, -300)
+                self._robot.drive(-325, -325)
                 current_position = self.get_position()
                 closest_node_id, dist = self.find_closest_node(road_map, current_position)
                 print('Collision Detected closest node in {}'.format(dist))
@@ -405,3 +413,29 @@ class RobotMapped(Robot):
                     collision_detected = True
                     break
         return collision_detected
+
+
+
+    def navigate_end(self, destination):
+        k = 25
+        threshold = 10
+        print("navigating to final position")
+        current_position = self.get_position()
+        distance, direction = navigation.calc_vector(current_position, destination)
+        while distance > threshold:
+            current_position = self.get_position()
+            distance, direction = navigation.calc_vector(current_position, destination)
+            if distance < threshold:
+                break
+            alpha = navigation.angle((current_position.dx, current_position.dy), direction)
+            # print('-------------------------')
+            # print('distance [{}], alpha [{}] '.format(distance, alpha))
+            left_motor, right_motor = self.get_speed(k/2, alpha, distance)
+            self._robot.drive(left_motor, right_motor)
+            time.sleep(0.3)
+            if self.hard_turn(alpha) is True:
+                time.sleep(0.25)
+            # print('Left Motor [{}], Right Motor [{}]'.format(left_motor, right_motor))
+            distance, direction = navigation.calc_vector(current_position, destination)
+        self._robot.drive(-350, -350)
+        return distance < threshold

@@ -113,7 +113,7 @@ class Graph(object):
 
     # Create edges between all the nodes that are within distance 30 (may be changed by max_distance value)
     def create_edges1(self, dest_node):
-        max_distance = 70
+        max_distance = 50
         for node_i in self.get_nodes():
             for node_j in self.get_nodes():
                 if node_i != node_j:
