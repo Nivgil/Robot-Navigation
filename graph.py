@@ -1,6 +1,5 @@
 import numpy as np
 import math
-from position import Position
 
 
 class Graph(object):
@@ -90,7 +89,7 @@ class Graph(object):
         while x <= 125:
             y = -125
             while y <= 100:
-                new_node = Node(str(x) + ',' + str(y), np.array((x, y)))
+                new_node = Node(x, y)
                 # print("new node coordinates are: " + str(new_node.get_coordinates()))
                 self.add_node(new_node)
                 y += dif
@@ -101,22 +100,20 @@ class Graph(object):
         while x1 <= 125:
             y1 = -250
             while y1 <= 255:
-                new_node = Node(str(x1) + ',' + str(y1), np.array((x1, y1)))
+                new_node = Node(x1, y1)
                 self.add_node(new_node)
                 # print("new node coordinates are: " + str(new_node.get_coordinates()))
                 y1 += dif
             x1 += dif
         # case 3: -200<x<0, y
-        destination_node = Node(str(destination.x) + ',' + str(destination.y), (destination.x, destination.y))
+        destination_node = Node(destination.x, destination.y)
         self.add_node(destination_node)
-        self.add_node(Node(str(-110) + ',' + str(230), np.array((-110, 230))))
-        self.add_node(Node(str(-100) + ',' + str(220), np.array((-100, 220))))
         print("final destination id is " + str(destination_node.get_id()))
-        return destination_node.get_id(), destination_node # return destination node id
+        return destination_node.get_id(), destination_node  # return destination node id
 
     # Create edges between all the nodes that are within distance 30 (may be changed by max_distance value)
-    def create_edges1(self,dest_node):
-        max_distance = 50
+    def create_edges1(self, dest_node):
+        max_distance = 70
         for node_i in self.get_nodes():
             for node_j in self.get_nodes():
                 if node_i != node_j:
@@ -124,15 +121,33 @@ class Graph(object):
                     coordinates_j = node_j[1].get_coordinates()
                     distance = np.linalg.norm(np.array(coordinates_i) - np.array(coordinates_j))
                     if distance < max_distance:
+                        self.add_edge(node_i[1], node_j[1])
                         if node_i[1] == dest_node:
                             print("Connected destination node to node {}".format(node_j[1].get_coordinates()))
-                        self.add_edge(node_i[1], node_j[1])
+
+    def print_board(self, location, obstacles):
+        down_sample = 20
+        board = np.chararray(shape=(int(600 / down_sample), int(600 / down_sample)), unicode=True)
+        board[:] = '-'
+        # for node_id, node in self.get_nodes():
+        #     x_coord, y_coord = node.get_coordinates()
+        #     board[int((300 + x_coord) / down_sample), int((300 + y_coord) / down_sample)] = 'o'
+        for obstacle in obstacles.get_obstacles():
+            board[int((300 + obstacle.x) / down_sample), int((300 + obstacle.y) / down_sample)] = 'x'
+
+        board[int((300 + location.x) / down_sample), int((300 + location.y) / down_sample)] = '@'
+
+        print('---------------Board---------------------')
+        for row in range(0, int(600 / down_sample)):
+            for col in range(0, int(600 / down_sample)):
+                print(str(board[row][col]), end='')
+            print('')
 
 
 class Node(object):
-    def __init__(self, node_id=None, coordinates=None):
-        self._id = node_id
-        self._coordinates = coordinates
+    def __init__(self, x, y):
+        self._id = str(np.floor(x)) + ',' + str(np.floor(y))
+        self._coordinates = np.array((x, y))
         self._neighbors = dict()
 
     def get_id(self):
@@ -152,6 +167,14 @@ class Node(object):
     def delete_neighbor(self, node_id):
         self._neighbors.pop(node_id, None)
 
+    def __str__(self):
+        string = 'Node: x-[{}], y-[{}]'.format(self._coordinates[0], self._coordinates[1])
+        return string
+
+    def __repr__(self):
+        string = 'Node: x-[{}], y-[{}]'.format(self._coordinates[0], self._coordinates[1])
+        return string
+
 
 class Edge(object):
     def __init__(self, node_1=None, node_2=None):
@@ -170,5 +193,4 @@ class Edge(object):
         return self._coord_1, self._coord_2
 
     def set_weight(self, weight):
-        # print("Setting new weight to edge {}".format(self._id))
         self._weight = weight
