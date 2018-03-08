@@ -14,17 +14,12 @@ def coordinates_to_node_id(coordinates):
 
 
 def angle(v1, v2):
-    print('dot product')
-    print(np.dot(v1, v2))
-    print('norm')
-    print((np.linalg.norm(v1) * np.linalg.norm(v2)))
-    print('cross')
-    print((np.cross(v1, v2)))
-    print('acos input')
-    print(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
-
-    return (180 / math.pi) * math.acos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))) * np.sign(
-        np.cross(v1, v2))
+    arg = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+    if arg > 1:
+        arg = 1
+    if arg < -1:
+        arg = -1
+    return (180 / math.pi) * math.acos(arg) * np.sign(np.cross(v1, v2))
 
 
 def calc_vector(p1, p2):
@@ -79,6 +74,8 @@ def intersects_circle(p1, p2, c, r=10):
 
 
 def local_min(v1, v2):
+    if np.linalg.norm(v1)*np.linalg.norm(v2) == 0:
+        return False
     v1 = [x / np.linalg.norm(v1) for x in v1]
     v2 = [x / np.linalg.norm(v2) for x in v2]
 

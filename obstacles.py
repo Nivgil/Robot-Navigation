@@ -58,11 +58,10 @@ class Obstacles(object):
         total_v_x, total_v_y = 0, 0
         for obstacle in self._obstacles:
             distance, direction = calc_vector(robot_coord, obstacle)
-            alpha = angle((robot_coord.dx, robot_coord.dy), direction)
-            if alpha < 20:
-                threshold = 100
             if distance > threshold:
                 continue
+            if distance < 20:
+                force_factor *= 2
             else:
                 v_x, v_y = [-(force_factor / distance) * u for u in direction]
                 total_v_x += v_x
