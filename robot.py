@@ -1,7 +1,7 @@
 from udpclient import RClient
 from position import Position
 from obstacles import Obstacles
-from navigation import calc_vector, angle
+from navigation import calc_vector, angle, local_min
 import math
 import time
 
@@ -19,7 +19,7 @@ def valid_position(position):
 
 
 class Robot(object):
-    def __init__(self, ip_address="192.168.1.153", default_speed=450):
+    def __init__(self, ip_address="192.168.1.155", default_speed=400):
         self._robot = RClient(ip_address, 2777)
         self._robot.connect()
         self._default_speed = default_speed
@@ -45,7 +45,7 @@ class Robot(object):
         return abs(alpha) >= 50
 
     def _wheel_speed(self, k, alpha, distance, sign):
-        if distance < 100:
+        if distance < 50:
             speed_factor = 0.3
         else:
             speed_factor = 1
@@ -53,7 +53,7 @@ class Robot(object):
             speed = self._default_speed * speed_factor + k * abs(alpha)
         if sign == '-':
             speed = self._default_speed * speed_factor - k * abs(alpha)
-        speed = speed if speed > 300 else 300
+        speed = speed if speed > 330 else 330
         speed = speed if speed < 1000 else 1000
         return speed
 
@@ -119,7 +119,7 @@ class RobotSimple(Robot):
 
 class Potential(Robot):
     def __init__(self, *args, **kwargs):
-        self._th_to_destination = 30
+        self._th_to_destination = 20
         self._positive_force_constant = 10
         super().__init__(*args, **kwargs)
 
@@ -127,11 +127,11 @@ class Potential(Robot):
         obstacles = Obstacles()
         k = 25
         gravity_force_factor = 10
-        repulsive_force_factor = 100
+        repulsive_force_factor = 200
         arrival_threshold = 10
-        collision_threshold = 25
+        collision_threshold = 60
 
-        current_position = Position(0, 0, 0, 1)  # self.get_position()
+        current_position = self.get_position()
         distance, direction = calc_vector(current_position, destination)
         while distance > arrival_threshold:
             current_position = self.get_position()
@@ -140,12 +140,18 @@ class Potential(Robot):
             repulsive_v_x, repulsive_v_y = obstacles.get_velocity(current_position, collision_threshold,
                                                                   repulsive_force_factor)
             positive_v_x, positive_v_y = self.get_velocity(current_position, destination)
+            if local_min((positive_v_x, positive_v_y), (repulsive_v_x, repulsive_v_y)) is True:
+                positive_v_x = -positive_v_y
+                positive_v_y = positive_v_x
+                print('Local min detected')
             step_v_x, step_v_y = repulsive_v_x + positive_v_x, repulsive_v_y + positive_v_y
-            step_size = math.sqrt(step_v_x ** 2 + step_v_y ** 2)
             alpha = angle((current_position.dx, current_position.dy), (step_v_x, step_v_y))
             left_motor, right_motor = self.get_speed(k, alpha, distance)
             self._robot.drive(left_motor, right_motor)
-            time.sleep(0.25)
+            sleep_time = 0.5
+            if distance < 50:
+                sleep_time = 0.5
+            time.sleep(sleep_time)
             if self.hard_turn(alpha) is True:
                 time.sleep(0.25)
             distance, direction = calc_vector(current_position, destination)
@@ -159,7 +165,3 @@ class Potential(Robot):
         # else:
         #     v_x, v_y = [(distance + 2) * u for u in direction]
         return v_x, v_y
-
-
-robot = Potential()
-robot.navigate(Position(0, 50))

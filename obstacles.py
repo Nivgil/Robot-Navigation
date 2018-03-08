@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from navigation import calc_vector
+from navigation import calc_vector, angle
 
 
 class Obstacle(object):
@@ -58,6 +58,9 @@ class Obstacles(object):
         total_v_x, total_v_y = 0, 0
         for obstacle in self._obstacles:
             distance, direction = calc_vector(robot_coord, obstacle)
+            alpha = angle((robot_coord.dx, robot_coord.dy), direction)
+            if alpha < 20:
+                threshold = 100
             if distance > threshold:
                 continue
             else:

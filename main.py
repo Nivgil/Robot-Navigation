@@ -15,7 +15,7 @@ def kbd():
 
 
 def main():
-    my_robot = robot.get_robot('simple')
+    my_robot = robot.get_robot('potential')
     kbd_thread = threading.Thread(target=kbd)
     kbd_thread.start()
     time.sleep(1)
